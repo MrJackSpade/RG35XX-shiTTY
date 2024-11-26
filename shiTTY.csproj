@@ -18,6 +18,17 @@
 
   <ItemGroup>
     <None Remove="DVD.png" />
+    <None Remove="icon.png" />
+    <None Remove="Screenshots\shiTTY1.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="icon.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Screenshots\shiTTY1.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
@@ -25,6 +36,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\RG35XX.NET\RG35XX.Core\RG35XX.Core.csproj" />
     <ProjectReference Include="..\RG35XX.NET\RG35XX.Libraries\RG35XX.Libraries.csproj" />
   </ItemGroup>
 

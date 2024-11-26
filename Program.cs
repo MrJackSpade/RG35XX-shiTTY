@@ -5,6 +5,7 @@ using RG35XX.Core.Interfaces;
 using RG35XX.Libraries;
 using RG35XX.Libraries.Controls;
 using RG35XX.Libraries.Pages;
+using shiTTY.Pages;
 using System.Runtime.InteropServices;
 
 namespace shiTTY
@@ -28,51 +29,39 @@ namespace shiTTY
             _renderer.Initialize(640, 480);
             _renderer.AutoFlush = false;
 
-            _frameBuffer = _renderer.FrameBuffer;
-
-            _terminal.CharactersReceived += Terminal_CharacterReceived;
-
-            Page terimalPage = new();
-            _terminalPictureBox = new()
+            try
             {
-                Bounds = new Bounds(0, 0, 1, 1),
-                IsSelectable = true
-            };
-            _terminalPictureBox.OnKeyPressed += OnTerminalKeyPressed;
-            terimalPage.AddControl(_terminalPictureBox);
-            _application = new(_frameBuffer);
-            _application.OpenPage(terimalPage);
-            _terminal.Start();
+                _frameBuffer = _renderer.FrameBuffer;
 
-            Task aTask = _application.Execute();
-            Task tTask = _terminal.WaitForExit();
+                _terminal.CharactersReceived += Terminal_CharacterReceived;
 
-            await Task.WhenAny(aTask, tTask);
-        }
+                _application = new(_frameBuffer);
 
-        private static void OnTerminalKeyPressed(object? sender, GamepadKey e)
-        {
-            if (e is GamepadKey.MENU_DOWN)
-            {
-                OnScreenKeyboard keyboard = new(string.Empty);
-                _application.OpenPage(keyboard);
-                keyboard.OnClosing += (s, e) =>
+                TerminalPage terimalPage = new(_application, _renderer, _terminal);
+               
+                _terminalPictureBox = new()
                 {
-                    string? toSend = keyboard.Value;
-
-                    if (string.IsNullOrEmpty(toSend))
-                    {
-                        return;
-                    }
-
-                    if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                    {
-                        _renderer.WriteLine(toSend);
-                        toSend += "; echo -n \"$(pwd)# \"";
-                    }
-
-                    _terminal.SendInput(toSend);
+                    Bounds = new Bounds(0, 0, 1, 1)
                 };
+
+                terimalPage.AddControl(_terminalPictureBox);
+                _application.Execute();
+                _application.OpenPage(terimalPage);
+                _terminal.Start();
+
+                Task tTask = _terminal.WaitForExit();
+
+                await Task.WhenAny(_application.WaitForClose(), tTask);
+            }
+            catch (Exception ex)
+            {
+                _renderer.WriteLine(ex.Message, Color.Red);
+                _renderer.WriteLine(ex.StackTrace, Color.Red);
+                _renderer.WriteLine("Exiting in 15 seconds...", Color.Green);
+                _renderer.Flush();
+
+                System.Threading.Thread.Sleep(15000);
+                System.Environment.Exit(1);
             }
         }
 
